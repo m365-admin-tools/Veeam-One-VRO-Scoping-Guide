@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veeam One &amp; VRO Scoping Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --b9:#042C53;--b8:#0C447C;--b6:#185FA5;--b2:#85B7EB;--b1:#B5D4F4;--b0:#E6F1FB;
+  --t8:#085041;--t6:#0F6E56;--t1:#9FE1CB;--t0:#E1F5EE;
+  --a8:#633806;--a6:#854F0B;--a2:#EF9F27;--a1:#FAC775;--a0:#FAEEDA;
+  --r8:#791F1F;--r6:#A32D2D;--r1:#F7C1C1;--r0:#FCEBEB;
+  --g9:#2C2C2A;--g8:#444441;--g6:#5F5E5A;--g4:#888780;--g2:#B4B2A9;--g1:#D3D1C7;--g0:#F1EFE8;
+  --tx:#1a1a19;--txm:#5F5E5A;--bd:rgba(0,0,0,.12);--bds:rgba(0,0,0,.22);
+  --rad:8px;--radl:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.5;color:var(--tx);background:#ebebde;}
+#app{display:flex;flex-direction:column;height:100vh;}
+
+/* TOP BAR */
+#tb{background:var(--b9);color:#fff;padding:9px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap;}
+#tb h1{font-size:13px;font-weight:600;color:var(--b1);white-space:nowrap;}
+#tb .tsep{color:#1d4a70;font-size:18px;}
+#tb input[type=text]{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:4px 9px;border-radius:var(--rad);font-size:12px;width:190px;}
+#tb input::placeholder{color:rgba(255,255,255,.35);}
+#tb .sp{flex:1;}
+#tb button{padding:5px 13px;border-radius:var(--rad);font-size:11px;font-weight:700;cursor:pointer;border:none;transition:opacity .15s;}
+.btn-p{background:var(--b1);color:var(--b9);}
+.btn-s{background:rgba(255,255,255,.13);color:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.2)!important;}
+#tb button:hover{opacity:.8;}
+
+/* LAYOUT */
+#lay{display:flex;flex:1;overflow:hidden;}
+
+/* CONFIG PANEL */
+#cp{width:330px;flex-shrink:0;background:#fff;border-right:1px solid var(--bd);overflow-y:auto;padding:14px;}
+.cs{margin-bottom:18px;}
+.cs-h{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--g6);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;}
+.fr{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.fr label{font-size:12px;color:var(--txm);flex:1;}
+.fr input[type=number]{width:60px;flex-shrink:0;padding:4px 7px;border:1px solid var(--bds);border-radius:5px;font-size:12px;background:#fafafa;}
+.fr input:focus,.fr select:focus{outline:none;border-color:var(--b6);background:var(--b0);}
+.fr select{flex-shrink:0;padding:4px 7px;border:1px solid var(--bds);border-radius:5px;font-size:11px;background:#fafafa;max-width:170px;}
+.fu{font-size:10px;color:var(--g4);width:30px;flex-shrink:0;}
+.fr2{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.fr2 label{font-size:12px;color:var(--txm);flex:1;}
+.fr2 input[type=number]{width:46px;padding:4px 5px;border:1px solid var(--bds);border-radius:5px;font-size:12px;background:#fafafa;text-align:center;}
+.fr2 .dash{color:var(--g4);font-size:11px;}
+.ptog{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx);margin-bottom:6px;padding:6px 8px;background:var(--g0);border:1px solid var(--bd);border-radius:var(--rad);cursor:pointer;font-weight:600;}
+.ptog input{cursor:pointer;}
+.ptog.on{background:var(--b0);border-color:var(--b2);color:var(--b9);}
+.ctog{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txm);margin-bottom:5px;cursor:pointer;}
+.ctog input{cursor:pointer;}
+.hint{font-size:10px;color:var(--g4);margin:-3px 0 7px;line-height:1.4;}
+textarea{width:100%;min-height:64px;padding:6px 8px;border:1px solid var(--bds);border-radius:5px;font-size:12px;font-family:inherit;background:#fafafa;resize:vertical;}
+textarea:focus{outline:none;border-color:var(--b6);background:var(--b0);}
+.subdim{opacity:.4;pointer-events:none;}
+
+/* REPORT PANEL */
+#rp{flex:1;overflow-y:auto;padding:22px 26px;background:#ebebde;}
+
+/* REPORT DOCUMENT */
+.rpt{max-width:880px;background:#fff;border-radius:var(--radl);padding:34px 38px;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.rh{border-bottom:2px solid var(--b6);padding-bottom:16px;margin-bottom:28px;}
+.rh h1{font-size:19px;font-weight:700;color:var(--b9);margin-bottom:3px;}
+.rh .meta{font-size:11px;color:var(--txm);margin-top:7px;display:flex;gap:18px;flex-wrap:wrap;}
+.rpt h2{font-size:14px;font-weight:700;color:var(--b9);margin:32px 0 11px;padding-bottom:5px;border-bottom:1px solid var(--bd);}
+.rpt h3{font-size:13px;font-weight:700;color:var(--g8);margin:18px 0 7px;}
+.rpt p{font-size:13px;margin-bottom:8px;line-height:1.6;}
+.rpt ul{margin:5px 0 9px 17px;}.rpt li{font-size:13px;margin-bottom:3px;}
+.cl{border-radius:var(--rad);padding:9px 13px;margin:11px 0;font-size:12px;line-height:1.5;}
+.cl strong{display:block;margin-bottom:2px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
+.ci{background:var(--b0);border-left:3px solid var(--b6);color:var(--b9);}
+.ci strong{color:var(--b8);}
+.co{background:var(--t0);border-left:3px solid var(--t6);color:var(--t8);}
+.co strong{color:var(--t8);}
+.cw{background:var(--a0);border-left:3px solid var(--a2);color:var(--a8);}
+.cw strong{color:var(--a8);}
+.cd{background:var(--r0);border-left:3px solid var(--r6);color:var(--r8);}
+.cd strong{color:var(--r8);}
+.tw{overflow-x:auto;margin:11px 0;border-radius:var(--rad);border:1px solid var(--bd);}
+.tw table{width:100%;border-collapse:collapse;font-size:12px;}
+.tw th{background:var(--g0);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--g6);padding:7px 11px;text-align:left;border-bottom:1px solid var(--bds);white-space:nowrap;}
+.tw td{padding:6px 11px;border-bottom:1px solid var(--bd);vertical-align:top;}
+.tw tr:last-child td{border-bottom:none;}
+.tw tr:nth-child(even) td{background:var(--g0);}
+td.ok{color:var(--t6);font-weight:700;}
+td.wn{color:var(--a8);font-weight:700;}
+td.bd{color:var(--r6);font-weight:700;}
+td.nm{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap;}
+td.em{font-weight:700;color:var(--b8);}
+tr.sub td{background:var(--b0)!important;font-weight:700;color:var(--b9);}
+tr.tot td{background:var(--b6)!important;font-weight:700;color:#fff;}
+.sg2{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:11px;margin:11px 0;}
+.sc{background:var(--g0);border:1px solid var(--bd);border-radius:var(--radl);overflow:hidden;}
+.sch{padding:7px 11px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.sch-bl{background:var(--b6);color:#fff;}
+.sch-tl{background:var(--t6);color:#fff;}
+.sch-am{background:var(--a0);color:var(--a8);}
+.scb{padding:9px 11px;}
+.scr{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--bd);font-size:12px;}
+.scr:last-child{border-bottom:none;}
+.scrl{color:var(--txm);}
+.scrv{font-weight:700;}
+.rf{margin-top:36px;padding-top:14px;border-top:1px solid var(--bd);font-size:11px;color:var(--txm);display:flex;justify-content:space-between;}
+
+/* PRINT */
+@media print{
+  #tb,#cp{display:none!important;}
+  #app,#lay{display:block;height:auto;}
+  #rp{overflow:visible;padding:0;background:#fff;}
+  .rpt{box-shadow:none;max-width:none;padding:20px;}
+  body{background:#fff;}
+  .rpt h2{page-break-before:auto;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="tb">
+  <h1>&#9881; Veeam One &amp; VRO Scoping Guide</h1>
+  <span class="tsep">|</span>
+  <input type="text" id="in-cust" placeholder="Customer Name" value="New Customer" oninput="S.customerName=this.value;render()">
+  <input type="text" id="in-prep" placeholder="Prepared by" value="Charles Arconi" style="width:150px" oninput="S.preparedBy=this.value;render()">
+  <span class="sp"></span>
+  <button class="btn-s" onclick="doReset()">&#8634; Reset</button>
+  <button class="btn-s" onclick="doExport()">&#11015; Export HTML</button>
+  <button class="btn-p" onclick="window.print()">&#9112; Print / PDF</button>
+</div>
+
+<div id="lay">
+  <div id="cp">
+
+    <div class="cs">
+      <div class="cs-h">Products in Scope</div>
+      <label class="ptog" id="pt-vone"><input type="checkbox" checked onchange="S.incVone=this.checked;syncDim();render()"> Veeam One</label>
+      <label class="ptog" id="pt-vro"><input type="checkbox" checked onchange="S.incVro=this.checked;syncDim();render()"> Veeam Recovery Orchestrator</label>
+    </div>
+
+    <div class="cs">
+      <div class="cs-h">Environment Profile</div>
+      <p class="hint">Captured for the SOW environment summary and to justify the complexity rating.</p>
+      <div class="fr"><label>VBR servers</label><input type="number" min="0" max="50" value="1" oninput="ug('vbr',+this.value)"><span class="fu"></span></div>
+      <div class="fr"><label>Sites</label><input type="number" min="1" max="200" value="1" oninput="ug('sites',+this.value)"><span class="fu"></span></div>
+      <div class="fr"><label>Hyper-V hosts</label><input type="number" min="0" max="500" value="0" oninput="ug('hv',+this.value)"><span class="fu"></span></div>
+      <div class="fr"><label>ESXi hosts</label><input type="number" min="0" max="500" value="0" oninput="ug('esx',+this.value)"><span class="fu"></span></div>
+      <div class="fr"><label>Protected VMs</label><input type="number" min="0" max="20000" value="50" oninput="ug('vms',+this.value)"><span class="fu"></span></div>
+      <div class="fr"><label>Backup jobs</label><input type="number" min="0" max="1000" value="10" oninput="ug('jobs',+this.value)"><span class="fu"></span></div>
+    </div>
+
+    <div class="cs">
+      <div class="cs-h">Common Scope Decisions</div>
+      <div class="fr"><label>Server provisioning</label>
+        <select id="g-srv" onchange="ug('srvBy',this.value)">
+          <option value="client" selected>Client provides server(s)</option>
+          <option value="consult">Consultant builds server(s)</option>
+        </select></div>
+      <div class="fr"><label>SQL platform</label>
+        <select id="g-sql" onchange="ug('sql',this.value)">
+          <option value="express" selected>New SQL Express (local)</option>
+          <option value="existing">Existing SQL instance</option>
+        </select></div>
+      <div class="fr"><label>Site complexity</label>
+        <select id="g-cx" onchange="ug('cx',this.value)">
+          <option value="1" selected>Simple (&times;1.0)</option>
+          <option value="1.25">Moderate (&times;1.25)</option>
+          <option value="1.5">Complex (&times;1.5)</option>
+        </select></div>
+      <p class="hint">Complexity multiplies configuration-task hours only. Install hours are unaffected.</p>
+    </div>
+
+    <div class="cs" id="cs-vone">
+      <div class="cs-h">Veeam One Scope</div>
+      <div class="fr"><label>Scheduled reports</label><input type="number" min="0" max="100" value="5" oninput="ug('voReports',+this.value)"><span class="fu"></span></div>
+      <label class="ctog"><input type="checkbox" checked onchange="ug('voAlarms',this.checked)"> Custom alarm tuning</label>
+      <label class="ctog"><input type="checkbox" onchange="ug('voBV',this.checked)"> Business views required</label>
+      <div class="fr2" style="margin-top:8px"><label>Install (hrs)</label><input type="number" min="0" max="200" value="4" oninput="ug('voInsL',+this.value)"><span class="dash">&ndash;</span><input type="number" min="0" max="200" value="8" oninput="ug('voInsH',+this.value)"></div>
+      <div class="fr2"><label>Configure (hrs)</label><input type="number" min="0" max="200" value="8" oninput="ug('voCfgL',+this.value)"><span class="dash">&ndash;</span><input type="number" min="0" max="200" value="16" oninput="ug('voCfgH',+this.value)"></div>
+      <div class="fr2"><label>Validate (hrs)</label><input type="number" min="0" max="200" value="1" oninput="ug('voValL',+this.value)"><span class="dash">&ndash;</span><input type="number" min="0" max="200" value="2" oninput="ug('voValH',+this.value)"></div>
+    </div>
+
+    <div class="cs" id="cs-vro">
+      <div class="cs-h">VRO Scope</div>
+      <div class="fr"><label>Recovery plans to build</label><input type="number" min="0" max="200" value="5" oninput="ug('vroPlans',+this.value)"><span class="fu"></span></div>
+      <div class="fr"><label>Plans to test</label><input type="number" min="0" max="200" value="5" oninput="ug('vroTests',+this.value)"><span class="fu"></span></div>
+      <label class="ctog"><input type="checkbox" onchange="ug('vroScripts',this.checked)"> Custom pre/post scripting</label>
+      <div class="fr2" style="margin-top:8px"><label>Install (hrs)</label><input type="number" min="0" max="200" value="4" oninput="ug('vroInsL',+this.value)"><span class="dash">&ndash;</span><input type="number" min="0" max="200" value="8" oninput="ug('vroInsH',+this.value)"></div>
+      <div class="fr2"><label>Initial config (hrs)</label><input type="number" min="0" max="200" value="8" oninput="ug('vroCfgL',+this.value)"><span class="dash">&ndash;</span><input type="number" min="0" max="200" value="12" oninput="ug('vroCfgH',+this.value)"></div>
+      <div class="fr2"><label>Build / plan (hrs)</label><input type="number" min="0" max="100" value="4" oninput="ug('vroBldL',+this.value)"><span class="dash">&ndash;</span><input type="number" min="0" max="100" value="8" oninput="ug('vroBldH',+this.value)"></div>
+      <div class="fr2"><label>Test / plan (hrs)</label><input type="number" min="0" max="100" value="2" oninput="ug('vroTstL',+this.value)"><span class="dash">&ndash;</span><input type="number" min="0" max="100" value="4" oninput="ug('vroTstH',+this.value)"></div>
+    </div>
+
+    <div class="cs">
+      <div class="cs-h">Rate (Optional)</div>
+      <div class="fr"><label>Hourly rate (0 = hide cost)</label><input type="number" min="0" max="1000" value="0" oninput="ug('rate',+this.value)"><span class="fu">$/hr</span></div>
+      <div class="fr2"><label>Server build (hrs, each)</label><input type="number" min="0" max="40" value="2" oninput="ug('srvL',+this.value)"><span class="dash">&ndash;</span><input type="number" min="0" max="40" value="4" oninput="ug('srvH',+this.value)"></div>
+    </div>
+
+    <div class="cs">
+      <div class="cs-h">Engagement Notes</div>
+      <textarea placeholder="Optional notes that will appear in the report..." oninput="S.notes=this.value;render()"></textarea>
+    </div>
+
+  </div>
+
+  <div id="rp">
+    <div class="rpt" id="rc"></div>
+  </div>
+</div>
+</div>
+
+<script>
+var DEF = {
+  vbr:1,sites:1,hv:0,esx:0,vms:50,jobs:10,
+  srvBy:'client',sql:'express',cx:'1',
+  voReports:5,voAlarms:true,voBV:false,
+  voInsL:4,voInsH:8,voCfgL:8,voCfgH:16,voValL:1,voValH:2,
+  vroPlans:5,vroTests:5,vroScripts:false,
+  vroInsL:4,vroInsH:8,vroCfgL:8,vroCfgH:12,vroBldL:4,vroBldH:8,vroTstL:2,vroTstH:4,
+  rate:0,srvL:2,srvH:4
+};
+var S = {
+  customerName:'New Customer', preparedBy:'Charles Arconi',
+  incVone:true, incVro:true, notes:'',
+  g: JSON.parse(JSON.stringify(DEF))
+};
+
+function ug(k,v){S.g[k]=v;render();}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtN(n){return Number(n).toLocaleString();}
+function fmtDate(){return new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});}
+function rnd(n){return Math.round(n);}
+function money(n){return '$'+Number(Math.round(n)).toLocaleString();}
+function cxLabel(v){return v==='1'?'Simple':v==='1.25'?'Moderate':'Complex';}
+
+function syncDim(){
+  document.getElementById('cs-vone').classList.toggle('subdim',!S.incVone);
+  document.getElementById('cs-vro').classList.toggle('subdim',!S.incVro);
+  document.getElementById('pt-vone').classList.toggle('on',S.incVone);
+  document.getElementById('pt-vro').classList.toggle('on',S.incVro);
+}
+
+/* Build task rows for a product. Returns {rows:[{task,desc,lo,hi,note}],lo,hi} */
+function buildVone(g){
+  var m=parseFloat(g.cx), rows=[];
+  if(g.srvBy==='consult'){
+    rows.push({task:'Provision Windows Server 2022',
+      desc:'Build and patch a Windows Server 2022 VM for Veeam One. Client provides hypervisor capacity, IP, and domain join details.',
+      lo:g.srvL,hi:g.srvH,note:'Only in scope because the consultant is building the server.'});
+  }
+  rows.push({task:'Install Veeam One',
+    desc:'Install on '+(g.srvBy==='client'?'the client-provided, ready-built':'the newly provisioned')+' Windows Server 2022. '+
+      (g.sql==='express'?'SQL Express installed locally as part of setup.':'Connect to the client\u2019s existing SQL instance (client DBA provides instance name and permissions).')+
+      ' Requires service account, licensing, and network access to VBR server(s) and monitored hosts.',
+    lo:g.voInsL,hi:g.voInsH,note:'Time varies mainly with Windows Update duration.'});
+  var cfgBits=['Connect to '+g.vbr+' VBR server(s) and monitored infrastructure','configure notifications (SMTP)'];
+  if(g.voAlarms)cfgBits.push('custom alarm tuning and thresholds');else cfgBits.push('default alarm set');
+  cfgBits.push(g.voReports+' scheduled report(s)');
+  if(g.voBV)cfgBits.push('business views');
+  rows.push({task:'Configure Veeam One',
+    desc:cfgBits.join('; ')+'.',
+    lo:rnd(g.voCfgL*m),hi:rnd(g.voCfgH*m),
+    note:m>1?('Base '+g.voCfgL+'\u2013'+g.voCfgH+' hrs \u00d7 '+m+' ('+cxLabel(g.cx)+' site).'):''});
+  rows.push({task:'Validate & Handoff',
+    desc:'Confirm alarms trigger correctly and reports generate on schedule. Review configuration with the client and document.',
+    lo:g.voValL,hi:g.voValH,note:''});
+  return sumRows(rows);
+}
+
+function buildVro(g){
+  var m=parseFloat(g.cx), rows=[];
+  if(g.srvBy==='consult'){
+    rows.push({task:'Provision Windows Server 2022',
+      desc:'Build and patch a Windows Server 2022 VM for VRO. Client provides hypervisor capacity, IP, and domain join details.',
+      lo:g.srvL,hi:g.srvH,note:'Only in scope because the consultant is building the server.'});
+  }
+  rows.push({task:'Install VRO',
+    desc:'Install on '+(g.srvBy==='client'?'the client-provided, ready-built':'the newly provisioned')+' Windows Server 2022. '+
+      (g.sql==='express'?'SQL Express installed locally as part of setup.':'Connect to the client\u2019s existing SQL instance.')+
+      ' Requires service account, licensing, and network access to VBR server(s) and replica/backup infrastructure.',
+    lo:g.vroInsL,hi:g.vroInsH,note:'Time varies mainly with Windows Update duration.'});
+  rows.push({task:'Initial Configuration',
+    desc:'Connect VRO to '+g.vbr+' VBR server(s) and replica infrastructure. Define recovery locations, roles, and permissions. Configure notification settings.',
+    lo:rnd(g.vroCfgL*m),hi:rnd(g.vroCfgH*m),
+    note:m>1?('Base '+g.vroCfgL+'\u2013'+g.vroCfgH+' hrs \u00d7 '+m+' ('+cxLabel(g.cx)+' site).'):''});
+  if(g.vroPlans>0){
+    rows.push({task:'Build Recovery / Orchestration Plans',
+      desc:'Create '+g.vroPlans+' recovery plan(s) per VM/application group, including dependency ordering'+(g.vroScripts?' and custom pre/post-script steps':'')+'.',
+      lo:g.vroPlans*g.vroBldL,hi:g.vroPlans*g.vroBldH,
+      note:g.vroPlans+' plan(s) \u00d7 '+g.vroBldL+'\u2013'+g.vroBldH+' hrs each.'+(g.vroScripts?' Scripting effort is included in the per-plan range; complex scripts may exceed it.':'')});
+  }
+  if(g.vroTests>0){
+    rows.push({task:'Test Failover / Validation',
+      desc:'Run test failover of '+g.vroTests+' orchestration plan(s) to confirm successful execution. Document results and remediate plan failures.',
+      lo:g.vroTests*g.vroTstL,hi:g.vroTests*g.vroTstH,
+      note:g.vroTests+' plan(s) \u00d7 '+g.vroTstL+'\u2013'+g.vroTstH+' hrs each.'});
+  }
+  return sumRows(rows);
+}
+
+function sumRows(rows){
+  var lo=rows.reduce(function(a,r){return a+r.lo;},0);
+  var hi=rows.reduce(function(a,r){return a+r.hi;},0);
+  return {rows:rows,lo:lo,hi:hi};
+}
+
+function taskTable(b,g){
+  var showCost=g.rate>0;
+  var h='<div class="tw"><table><tr><th>Task</th><th>Description / Requirements</th><th>Hours</th>'+(showCost?'<th>Est. Cost</th>':'')+'</tr>';
+  b.rows.forEach(function(r){
+    h+='<tr><td class="em">'+esc(r.task)+'</td>'+
+      '<td>'+esc(r.desc)+(r.note?'<br><span style="font-size:11px;color:var(--txm)">'+esc(r.note)+'</span>':'')+'</td>'+
+      '<td class="nm">'+r.lo+'\u2013'+r.hi+'</td>'+
+      (showCost?'<td class="nm">'+money(r.lo*g.rate)+'\u2013'+money(r.hi*g.rate)+'</td>':'')+
+      '</tr>';
+  });
+  h+='<tr class="sub"><td>Subtotal</td><td></td><td class="nm">'+b.lo+'\u2013'+b.hi+'</td>'+
+    (showCost?'<td class="nm">'+money(b.lo*g.rate)+'\u2013'+money(b.hi*g.rate)+'</td>':'')+'</tr>';
+  h+='</table></div>';
+  return h;
+}
+
+function render(){
+  var g=S.g, date=fmtDate();
+  var vone=S.incVone?buildVone(g):null;
+  var vro=S.incVro?buildVro(g):null;
+  var prods=[];
+  if(S.incVone)prods.push('Veeam One');
+  if(S.incVro)prods.push('Veeam Recovery Orchestrator');
+  var totLo=(vone?vone.lo:0)+(vro?vro.lo:0);
+  var totHi=(vone?vone.hi:0)+(vro?vro.hi:0);
+  var showCost=g.rate>0;
+  var hosts=g.hv+g.esx;
+  var plat=g.hv>0&&g.esx>0?'Hyper-V + VMware':g.hv>0?'Hyper-V':g.esx>0?'VMware vSphere':'Not specified';
+
+  var h='';
+
+  /* Header */
+  h+='<div class="rh"><h1>Veeam Monitoring &amp; Orchestration \u2014 Scoping Summary</h1>'+
+    '<p style="font-size:13px;color:var(--txm)">'+esc(prods.length?prods.join(' + '):'No products selected')+' deployment scope for statement of work preparation</p>'+
+    '<div class="meta"><span><strong>Customer:</strong> '+esc(S.customerName)+'</span>'+
+    '<span><strong>Date:</strong> '+date+'</span>'+
+    '<span><strong>Prepared by:</strong> '+esc(S.preparedBy)+'</span></div></div>';
+
+  if(!prods.length){
+    h+='<div class="cl cw"><strong>Nothing in scope</strong>Select at least one product in the left panel.</div>';
+    document.getElementById('rc').innerHTML=h;return;
+  }
+
+  /* Executive summary */
+  h+='<h2>1. Engagement Summary</h2>';
+  h+='<p>This engagement covers the deployment and configuration of '+esc(prods.join(' and '))+
+    ' for '+esc(S.customerName)+'. The environment consists of '+g.vbr+' Veeam Backup &amp; Replication server(s) protecting approximately '+
+    fmtN(g.vms)+' VMs across '+g.sites+' site(s) on '+(hosts>0?hosts+' hypervisor host(s) ('+plat+')':'an unspecified hypervisor platform')+
+    ', with '+g.jobs+' backup job(s) currently defined. The site is rated <strong>'+cxLabel(g.cx)+'</strong> complexity for configuration effort.</p>';
+  h+='<p>Total estimated effort is <strong>'+totLo+'\u2013'+totHi+' hours</strong>'+
+    (showCost?' (<strong>'+money(totLo*g.rate)+'\u2013'+money(totHi*g.rate)+'</strong> at '+money(g.rate)+'/hr)':'')+
+    '. Hour ranges reflect variables outside the consultant\u2019s control, primarily Windows Update duration during installs and per-plan complexity during orchestration work.</p>';
+  if(S.notes)h+='<div class="cl ci"><strong>Engagement Notes</strong>'+esc(S.notes)+'</div>';
+
+  /* Environment cards */
+  h+='<h2>2. Environment Profile</h2><div class="sg2">';
+  h+='<div class="sc"><div class="sch sch-bl">Infrastructure</div><div class="scb">'+
+    '<div class="scr"><span class="scrl">VBR servers</span><span class="scrv">'+g.vbr+'</span></div>'+
+    '<div class="scr"><span class="scrl">Sites</span><span class="scrv">'+g.sites+'</span></div>'+
+    '<div class="scr"><span class="scrl">Platform</span><span class="scrv">'+plat+'</span></div>'+
+    '<div class="scr"><span class="scrl">Hosts</span><span class="scrv">'+hosts+'</span></div></div></div>';
+  h+='<div class="sc"><div class="sch sch-tl">Workload</div><div class="scb">'+
+    '<div class="scr"><span class="scrl">Protected VMs</span><span class="scrv">'+fmtN(g.vms)+'</span></div>'+
+    '<div class="scr"><span class="scrl">Backup jobs</span><span class="scrv">'+g.jobs+'</span></div>'+
+    '<div class="scr"><span class="scrl">Complexity</span><span class="scrv">'+cxLabel(g.cx)+'</span></div></div></div>';
+  h+='<div class="sc"><div class="sch sch-am">Platform Decisions</div><div class="scb">'+
+    '<div class="scr"><span class="scrl">Server build</span><span class="scrv">'+(g.srvBy==='client'?'Client':'Consultant')+'</span></div>'+
+    '<div class="scr"><span class="scrl">SQL</span><span class="scrv">'+(g.sql==='express'?'SQL Express':'Existing instance')+'</span></div>'+
+    (S.incVro?'<div class="scr"><span class="scrl">Recovery plans</span><span class="scrv">'+g.vroPlans+'</span></div>':'')+
+    '</div></div>';
+  h+='</div>';
+
+  var sec=3;
+
+  /* Veeam One */
+  if(vone){
+    h+='<h2>'+sec+'. Veeam One \u2014 Scope of Work</h2>';
+    h+='<p>Veeam One provides monitoring, reporting, and alerting across the Veeam backup infrastructure and the underlying virtual environment.</p>';
+    h+=taskTable(vone,g);
+    if(g.cx!=='1')h+='<div class="cl ci"><strong>Complexity Applied</strong>Configuration hours include a \u00d7'+g.cx+' multiplier for a '+cxLabel(g.cx).toLowerCase()+' environment ('+g.jobs+' jobs, '+g.sites+' site(s), '+fmtN(g.vms)+' VMs).</div>';
+    sec++;
+  }
+
+  /* VRO */
+  if(vro){
+    h+='<h2>'+sec+'. Veeam Recovery Orchestrator \u2014 Scope of Work</h2>';
+    h+='<p>VRO automates and documents disaster recovery: orchestration plans define recovery order, dependencies, and validation for defined VM/application groups, with scheduled test failovers producing compliance-ready reports.</p>';
+    h+=taskTable(vro,g);
+    h+='<div class="cl cw"><strong>Most Variable Line Item</strong>Plan build and test effort scales linearly with plan count and can exceed the per-plan range where dependency chains are deep'+(g.vroScripts?' or custom scripting is extensive':'')+'. Any plans beyond the '+g.vroPlans+' scoped here should be handled as a change order at the same per-plan rates.</div>';
+    sec++;
+  }
+
+  /* Effort summary */
+  h+='<h2>'+sec+'. Effort Summary</h2>';
+  h+='<div class="tw"><table><tr><th>Product</th><th>Hours (Low\u2013High)</th>'+(showCost?'<th>Cost (Low\u2013High)</th>':'')+'</tr>';
+  if(vone)h+='<tr><td class="em">Veeam One</td><td class="nm">'+vone.lo+'\u2013'+vone.hi+'</td>'+(showCost?'<td class="nm">'+money(vone.lo*g.rate)+'\u2013'+money(vone.hi*g.rate)+'</td>':'')+'</tr>';
+  if(vro)h+='<tr><td class="em">Veeam Recovery Orchestrator</td><td class="nm">'+vro.lo+'\u2013'+vro.hi+'</td>'+(showCost?'<td class="nm">'+money(vro.lo*g.rate)+'\u2013'+money(vro.hi*g.rate)+'</td>':'')+'</tr>';
+  h+='<tr class="tot"><td>Total</td><td class="nm">'+totLo+'\u2013'+totHi+' hrs</td>'+(showCost?'<td class="nm">'+money(totLo*g.rate)+'\u2013'+money(totHi*g.rate)+'</td>':'')+'</tr>';
+  h+='</table></div>';
+  sec++;
+
+  /* Prerequisites */
+  h+='<h2>'+sec+'. Prerequisites &amp; Client Responsibilities</h2><ul>';
+  if(g.srvBy==='client')h+='<li>Provide '+prods.length+' ready-built, fully patched Windows Server 2022 VM(s) with network access, before the engagement start date. Install hours assume the server is ready; delays in server readiness extend the schedule.</li>';
+  else h+='<li>Provide hypervisor capacity, IP addressing, and domain join details for '+prods.length+' new Windows Server 2022 VM(s) to be built by the consultant.</li>';
+  if(g.sql==='existing')h+='<li>Client DBA to provide SQL instance name, a database creation login, and confirm supported SQL version prior to install.</li>';
+  else h+='<li>SQL Express will be installed locally on each application server; no client SQL resources required.</li>';
+  h+='<li>Provide licensing for '+esc(prods.join(' and '))+' before installation.</li>';
+  h+='<li>Provide a service account with local administrator rights on the application server(s) and appropriate access to VBR.</li>';
+  h+='<li>Provide SMTP relay details for email notifications.</li>';
+  h+='<li>Confirm firewall rules permitting the application server(s) to reach VBR server(s) and monitored/orchestrated infrastructure.</li>';
+  if(S.incVro){
+    h+='<li>Identify VM/application groups, recovery order, and dependencies for each of the '+g.vroPlans+' recovery plan(s) before plan-build work begins.</li>';
+    h+='<li>Approve test failover windows; test failovers require isolated networks or agreed maintenance windows.</li>';
+  }
+  h+='</ul>';
+  sec++;
+
+  /* Assumptions & exclusions */
+  h+='<h2>'+sec+'. Assumptions &amp; Exclusions</h2>';
+  h+='<h3>Assumptions</h3><ul>'+
+    '<li>Hour ranges are estimates; actuals are billed as worked unless the SOW states otherwise.</li>'+
+    '<li>Existing VBR infrastructure is healthy and at a supported version. Remediation of VBR issues found during deployment is out of scope and handled by change order.</li>'+
+    '<li>Install ranges assume prompt availability of client resources (credentials, approvals, firewall changes).</li>'+
+    (g.cx!=='1'?'<li>Configuration tasks carry a \u00d7'+g.cx+' complexity multiplier, reflected in the task tables above.</li>':'')+
+    '</ul>';
+  h+='<h3>Exclusions</h3><ul>'+
+    '<li>VBR deployment, upgrades, or job redesign (separately scoped).</li>'+
+    '<li>Hypervisor, storage, or network remediation.</li>'+
+    '<li>End-user training beyond the validation/handoff session.</li>'+
+    (S.incVro?'<li>Recovery plans beyond the '+g.vroPlans+' scoped, and live (non-test) failover execution.</li>':'')+
+    (S.incVone?'<li>Custom report development beyond the '+g.voReports+' scheduled report(s) scoped.</li>':'')+
+    '<li>Ongoing managed monitoring or DR testing services (available under separate agreement).</li>'+
+    '</ul>';
+
+  h+='<div class="rf"><span>Prepared by '+esc(S.preparedBy)+' \u2014 m365admintools.com</span><span>'+date+'</span></div>';
+
+  document.getElementById('rc').innerHTML=h;
+}
+
+function getReportCSS(){
+  return ':root{--b9:#042C53;--b8:#0C447C;--b6:#185FA5;--b2:#85B7EB;--b1:#B5D4F4;--b0:#E6F1FB;--t8:#085041;--t6:#0F6E56;--t1:#9FE1CB;--t0:#E1F5EE;--a8:#633806;--a6:#854F0B;--a2:#EF9F27;--a1:#FAC775;--a0:#FAEEDA;--r8:#791F1F;--r6:#A32D2D;--r1:#F7C1C1;--r0:#FCEBEB;--g9:#2C2C2A;--g8:#444441;--g6:#5F5E5A;--g4:#888780;--g2:#B4B2A9;--g1:#D3D1C7;--g0:#F1EFE8;--tx:#1a1a19;--txm:#5F5E5A;--bd:rgba(0,0,0,.12);--bds:rgba(0,0,0,.22);--rad:8px;--radl:12px;}'+
+  '*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}'+
+  'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;line-height:1.5;color:var(--tx);background:#fff;padding:24px;}'+
+  '.rpt{max-width:880px;margin:0 auto;}'+
+  '.rh{border-bottom:2px solid var(--b6);padding-bottom:16px;margin-bottom:28px;}'+
+  '.rh h1{font-size:19px;font-weight:700;color:var(--b9);margin-bottom:3px;}'+
+  '.rh .meta{font-size:11px;color:var(--txm);margin-top:7px;display:flex;gap:18px;flex-wrap:wrap;}'+
+  '.rpt h2{font-size:14px;font-weight:700;color:var(--b9);margin:32px 0 11px;padding-bottom:5px;border-bottom:1px solid var(--bd);}'+
+  '.rpt h3{font-size:13px;font-weight:700;color:var(--g8);margin:18px 0 7px;}'+
+  '.rpt p{font-size:13px;margin-bottom:8px;line-height:1.6;}'+
+  '.rpt ul{margin:5px 0 9px 17px;}.rpt li{font-size:13px;margin-bottom:3px;}'+
+  '.cl{border-radius:var(--rad);padding:9px 13px;margin:11px 0;font-size:12px;line-height:1.5;}'+
+  '.cl strong{display:block;margin-bottom:2px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;}'+
+  '.ci{background:var(--b0);border-left:3px solid var(--b6);color:var(--b9);}.ci strong{color:var(--b8);}'+
+  '.co{background:var(--t0);border-left:3px solid var(--t6);color:var(--t8);}.co strong{color:var(--t8);}'+
+  '.cw{background:var(--a0);border-left:3px solid var(--a2);color:var(--a8);}.cw strong{color:var(--a8);}'+
+  '.cd{background:var(--r0);border-left:3px solid var(--r6);color:var(--r8);}.cd strong{color:var(--r8);}'+
+  '.tw{overflow-x:auto;margin:11px 0;border-radius:var(--rad);border:1px solid var(--bd);}'+
+  '.tw table{width:100%;border-collapse:collapse;font-size:12px;}'+
+  '.tw th{background:var(--g0);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--g6);padding:7px 11px;text-align:left;border-bottom:1px solid var(--bds);white-space:nowrap;}'+
+  '.tw td{padding:6px 11px;border-bottom:1px solid var(--bd);vertical-align:top;}'+
+  '.tw tr:last-child td{border-bottom:none;}'+
+  '.tw tr:nth-child(even) td{background:var(--g0);}'+
+  'td.nm{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap;}'+
+  'td.em{font-weight:700;color:var(--b8);}'+
+  'tr.sub td{background:var(--b0)!important;font-weight:700;color:var(--b9);}'+
+  'tr.tot td{background:var(--b6)!important;font-weight:700;color:#fff;}'+
+  '.sg2{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:11px;margin:11px 0;}'+
+  '.sc{background:var(--g0);border:1px solid var(--bd);border-radius:var(--radl);overflow:hidden;}'+
+  '.sch{padding:7px 11px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}'+
+  '.sch-bl{background:var(--b6);color:#fff;}.sch-tl{background:var(--t6);color:#fff;}.sch-am{background:var(--a0);color:var(--a8);}'+
+  '.scb{padding:9px 11px;}'+
+  '.scr{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--bd);font-size:12px;}'+
+  '.scr:last-child{border-bottom:none;}.scrl{color:var(--txm);}.scrv{font-weight:700;}'+
+  '.rf{margin-top:36px;padding-top:14px;border-top:1px solid var(--bd);font-size:11px;color:var(--txm);display:flex;justify-content:space-between;}'+
+  '@media print{body{padding:0;}}';
+}
+
+function doExport(){
+  var inner=document.getElementById('rc').innerHTML;
+  var cust=S.customerName.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9\-]/g,'');
+  var blob=new Blob(['<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Veeam One / VRO Scoping \u2014 '+esc(S.customerName)+'</title><style>'+getReportCSS()+'</style></head><body><div class="rpt">'+inner+'</div></body></html>'],{type:'text/html'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='Veeam-One-VRO-Scoping-'+(cust||'Report')+'.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function doReset(){
+  S.g=JSON.parse(JSON.stringify(DEF));
+  S.incVone=true;S.incVro=true;S.notes='';
+  S.customerName='New Customer';S.preparedBy='Charles Arconi';
+  document.getElementById('in-cust').value='New Customer';
+  document.getElementById('in-prep').value='Charles Arconi';
+  /* Restore all inputs to defaults */
+  var cps=document.querySelectorAll('#cp input[type=number]');
+  var vals=[1,1,0,0,50,10, 5, 4,8, 8,16, 1,2, 5,5, 4,8, 8,12, 4,8, 2,4, 0, 2,4];
+  cps.forEach(function(el,i){if(i<vals.length)el.value=vals[i];});
+  document.getElementById('g-srv').value='client';
+  document.getElementById('g-sql').value='express';
+  document.getElementById('g-cx').value='1';
+  var cbs=document.querySelectorAll('#cp input[type=checkbox]');
+  /* Order: vone toggle, vro toggle, voAlarms, voBV, vroScripts */
+  var cbVals=[true,true,true,false,false];
+  cbs.forEach(function(el,i){if(i<cbVals.length)el.checked=cbVals[i];});
+  document.querySelector('#cp textarea').value='';
+  syncDim();render();
+}
+
+syncDim();render();
+</script>
+</body>
+</html>
