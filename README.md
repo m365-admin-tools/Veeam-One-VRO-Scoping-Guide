@@ -1,4 +1,6 @@
 # Veeam-One-VRO-Scoping-Guide
+
+This tool is still in development and not listed on my main site. 
 Veeam ONE & Recovery Orchestrator Scoping Guide
 
 A browser-based scoping tool that turns a short set of environment answers into a statement of work draft for a Veeam ONE or Veeam Recovery Orchestrator deployment. It produces a task-by-task effort estimate with hour ranges, a prerequisites list, and an assumptions and exclusions section, all written out as prose you can put in front of a client.
